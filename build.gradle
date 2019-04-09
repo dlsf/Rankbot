@@ -12,9 +12,10 @@ repositories {
 }
 
 dependencies {
-    compile ('net.dv8tion:JDA:4.ALPHA.0_58') {
+    compile ('net.dv8tion:JDA:3.8.3_462') {
         exclude module: 'opus-java'
     }
+    compile 'com.jagrosh:jda-utilities:2.1.5'
     compile ('org.apache.cassandra:cassandra-all:0.8.1') 
     compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.2'
     compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.2'
