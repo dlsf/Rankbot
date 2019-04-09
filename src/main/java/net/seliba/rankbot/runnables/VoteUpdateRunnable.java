@@ -30,10 +30,10 @@ public class VoteUpdateRunnable implements Runnable {
   private static VotesDao votesDao;
   private static boolean votingStatus;
 
-  public VoteUpdateRunnable(JDA jda, VotesDao votesDao, boolean votingStatus) {
-    this.jda = jda;
-    this.votesDao = votesDao;
-    this.votingStatus = votingStatus;
+  public VoteUpdateRunnable(JDA jdaObject, VotesDao votesDaoObject, boolean votingStatusObject) {
+    jda = jdaObject;
+    votesDao = votesDaoObject;
+    votingStatus = votingStatusObject;
   }
 
   @Override
