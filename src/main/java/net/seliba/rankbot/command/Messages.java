@@ -12,7 +12,7 @@ final class Messages {
 
     private Messages() {}
 
-  private static MessageEmbed createMessage(User author, String title, String description) {
+  public static MessageEmbed createMessage(User author, String title, String description) {
         return new EmbedBuilder()
                 .setAuthor(author.getName(), null, author.getAvatarUrl())
                 .setTitle(title)
