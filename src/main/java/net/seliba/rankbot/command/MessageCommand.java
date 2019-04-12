@@ -8,14 +8,14 @@ import com.jagrosh.jdautilities.command.CommandEvent;
  */
 public class MessageCommand extends Command {
 
-    public MessageCommand() {
-        this.name = "message";
+  public MessageCommand() {
+    this.name = "message";
+  }
+
+  @Override
+  protected void execute(CommandEvent event) {
+    if (event.getAuthor().getIdLong() == 450632370354126858L) {
+      event.reply(event.getArgs());
     }
-
-    @Override
-    protected void execute(CommandEvent event) {
-        event.reply(event.getArgs());
-    }
-
-
+  }
 }
