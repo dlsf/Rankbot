@@ -9,18 +9,19 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 public class NewVideoFetcher {
 
   public static String getLatestVideoData() throws IOException {
     List<String> list =
         getURLSource("https://www.youtube.com/channel/UCoZtjPCrPugVD9Q7Fb3tJ6w/videos");
-    return list.stream()
-        .filter(line -> line.startsWith("data-context-item-id"))
-        .findFirst()
-        .orElseThrow(NoSuchElementException::new)
-        .split("\"")[1];
+    for (int i = 0; i < list.size(); i++) {
+      String nextElement = list.get(i);
+      if (nextElement.contains("data-context-item-id")) {
+        return nextElement.split("\"")[1];
+      }
+    }
+    return "";
   }
 
   private static List<String> getURLSource(String url) throws IOException {
