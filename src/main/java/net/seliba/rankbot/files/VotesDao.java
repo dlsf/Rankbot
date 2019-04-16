@@ -32,7 +32,7 @@ public class VotesDao {
     return newMap;
   }
 
-  private static <K> Map<K, Long> sortMapByValue(Map<K, Long> mapToSort) {
+  public <K> Map<K, Long> sortMapByValue(Map<K, Long> mapToSort) {
     Map<K, Long> result = new LinkedHashMap<>();
     mapToSort.entrySet().stream()
         .sorted(Entry.comparingByValue())
