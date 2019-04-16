@@ -61,6 +61,7 @@ public class TomlData {
           entrys.put(arguments[0], value);
         }
       }
+      scanner.close();
     } catch (IOException exception) {
       LOGGER.error(exception, exception);
       exception.printStackTrace();
