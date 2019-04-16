@@ -10,7 +10,7 @@ import org.junit.Test;
 public class SortingTest {
 
   @Test
-  public void sortingTest() throws Exception {
+  public void sortingTest() {
     TomlData tomlData = new TomlData("sortingTest.toml");
     VotesDao votesDao = new VotesDao(null, tomlData, tomlData);
 
@@ -27,6 +27,8 @@ public class SortingTest {
     Assert.assertEquals(sortedTestMap.keySet().toArray()[0], "test71");
     Assert.assertEquals(sortedTestMap.keySet().toArray()[1], "test9");
     Assert.assertEquals(sortedTestMap.keySet().toArray()[2], "test7");
+
+    tomlData.delete();
   }
 
 }

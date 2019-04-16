@@ -13,6 +13,8 @@ public class LevelupTest {
     LevelDao levelDao = new LevelDao(tomlData);
     Assert.assertEquals(levelDao.getXpToLevelup(36), 150L);
     Assert.assertNotSame(levelDao.getXpToLevelup(1), 1L);
+
+    tomlData.delete();
   }
 
 }
