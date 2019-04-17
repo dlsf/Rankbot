@@ -5,9 +5,10 @@ import com.jagrosh.jdautilities.command.annotation.JDACommand;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
+
 import net.dv8tion.jda.core.entities.Member;
-import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.Role;
+import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
 import net.seliba.rankbot.files.VotesDao;
 import net.seliba.rankbot.runnables.VoteUpdateRunnable;
@@ -30,35 +31,28 @@ public class VoteCommandModule {
       return;
     }
 
+
     User author = event.getAuthor();
     List<Member> mentions = event.getMessage().getMentionedMembers();
     if (mentions.isEmpty()) {
-      Messages.deleteShortly(
-          (Message) Messages.createMessage(author, "Vote", "Bitte verwende !vote @User"));
+      event.reply(Messages.createMessage(author, "Vote", "Bitte verwende !vote @User"), Messages::deleteShortly);
       return;
     }
 
     Member candidate = mentions.get(0);
 
     if (!isVoteDay()) {
-      Messages.deleteShortly(
-          (Message) Messages.createMessage(author, "Vote", "Du darfst nur am Wochendende voten!"));
+      event.reply(Messages.createMessage(author, "Vote", "Du darfst nur am Wochendende voten!"), Messages::deleteShortly);
     } else if (candidate.getUser().equals(author)) {
-      Messages.deleteShortly((Message) Messages
-          .createMessage(author, "Vote", "Du darfst nicht für dich selbst voten!"));
+      event.reply(Messages.createMessage(author, "Vote", "Du darfst nicht für dich selbst voten!"), Messages::deleteShortly);
     } else if (votesDao.hasVoted(author)) {
-      Messages.deleteShortly(
-          (Message) Messages.createMessage(author, "Vote", "Du hast bereits gevotet!"));
+      event.reply(Messages.createMessage(author, "Vote", "Du hast bereits gevotet!"), Messages::deleteShortly);
     } else if (isExpert(candidate)) {
-      Messages.deleteShortly((Message) Messages
-          .createMessage(author, "Vote", "Dieser Nutzer ist bereits ein Experte"));
+      event.reply(Messages.createMessage(author, "Vote", "Dieser Nutzer ist bereits ein Experte"), Messages::deleteShortly);
     } else {
       votesDao.vote(author, candidate.getUser());
-      Messages.deleteShortly((Message)
-          Messages.createMessage(
-              author,
-              "Vote",
-              "Du hast erfolgreich für " + candidate.getEffectiveName() + " abgestimmt."));
+      event.reply(Messages.createMessage(author, "Vote", "Du hast erfolgreich für "
+          + candidate.getEffectiveName() + " abgestimmt."), Messages::deleteShortly);
     }
   }
 
@@ -67,23 +61,16 @@ public class VoteCommandModule {
     User author = event.getAuthor();
     List<Member> mentions = event.getMessage().getMentionedMembers();
     if (mentions.isEmpty()) {
-      Messages.deleteShortly((Message)
-          Messages.createMessage(
-              author, "Vote", "Du hast " + votesDao.getVotes(author) + " Votes!"));
+      event.reply(Messages.createMessage(author, "Vote", "Du hast " + votesDao.getVotes(author) + " Votes!"), Messages::deleteShortly);
     } else if (!mentions.get(0).equals(event.getMember()) && !isExpert(event.getMember())) {
-      Messages.deleteShortly((Message)
-          Messages.createMessage(author, "Vote", "Du darfst nur deine eigenen Votes einsehen!"));
+      event.reply(Messages.createMessage(author, "Vote", "Du darfst nur deine eigenen Votes einsehen!"), Messages::deleteShortly);
     } else {
       User candidate = mentions.get(0).getUser();
-      Messages.deleteShortly((Message)
-          Messages.createMessage(
-              author,
-              "Vote",
-              "Der User "
-                  + candidate.getAsMention()
-                  + " hat "
-                  + votesDao.getVotes(candidate)
-                  + " Votes!"));
+      event.reply(Messages.createMessage(author, "Vote", "Der User "
+              + candidate.getAsMention()
+              + " hat "
+              + votesDao.getVotes(candidate)
+              + " Votes!"), Messages::deleteShortly);
     }
   }
 
