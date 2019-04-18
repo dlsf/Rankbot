@@ -22,7 +22,7 @@ public class TopCommand extends Command {
   @Override
   protected void execute(CommandEvent event) {
     List<User> sortedUsers = levelDao.getSortedUsers(event.getJDA());
-    List<User> topUsers = sortedUsers.subList(sortedUsers.size() - 1, sortedUsers.size() - 11);
+    List<User> topUsers = sortedUsers.subList(sortedUsers.size() - 11, sortedUsers.size() - 1);
     event.reply(Messages.createMessage(event.getAuthor(), "Top", buildTopView(topUsers)));
   }
 
