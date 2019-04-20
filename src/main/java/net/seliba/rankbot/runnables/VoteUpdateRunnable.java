@@ -9,7 +9,12 @@ import java.nio.file.Paths;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Guild;
@@ -21,37 +26,35 @@ import net.seliba.rankbot.files.VotesDao;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-public class VoteUpdateRunnable implements Runnable {
+public class VoteUpdateRunnable {
 
   private static final Logger LOGGER = LogManager.getLogger(Rankbot.class.getName());
-
   private static boolean voteMessageSent = false;
   private static JDA jda;
   private static VotesDao votesDao;
   private static boolean votingStatus;
 
+  private ScheduledExecutorService scheduledExecutorService;
+
   public VoteUpdateRunnable(JDA jdaObject, VotesDao votesDaoObject, boolean votingStatusObject) {
     jda = jdaObject;
     votesDao = votesDaoObject;
     votingStatus = votingStatusObject;
+
+    this.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
   }
 
-  // TODO: Remove public static -> change usage in ChatListener
-  public static void stopVoting() {
-    LOGGER.info("Stoppe Experten-Voting...");
-    voteMessageSent = false;
-    List<User> possibleWinners = votesDao.getWinners();
-    User winner = possibleWinners.get(new Random().nextInt(possibleWinners.size()));
-    LOGGER.info("Gewinner des Votings: " + winner.getName());
-    sendEmbedMessage(
-        jda.getTextChannelById(555106694439501827L),
-        "Voting",
-        "Das Expertenvoting ist beendet. Neuer Experte: " + winner.getAsMention());
-    jda.getGuildById(486161636105650176L)
-        .getController()
-        .addSingleRoleToMember(getMember(winner), jda.getRoleById(551802664879390720L))
-        .queue();
-    votesDao.deleteVotes();
+  private static Optional<Member> getMember(User user) {
+    for (Guild guild : jda.getGuilds()) {
+      if (guild.getIdLong() == 486161636105650176L) {
+        for (Member member : guild.getMembers()) {
+          if (member.getUser().getIdLong() == user.getIdLong()) {
+            return Optional.of(member);
+          }
+        }
+      }
+    }
+    return Optional.empty();
   }
 
   private static void sendEmbedMessage(TextChannel textChannel, String title, String message) {
@@ -65,46 +68,46 @@ public class VoteUpdateRunnable implements Runnable {
         .queue();
   }
 
-  private static Member getMember(User user) {
-    for (Guild guild : jda.getGuilds()) {
-      if (guild.getIdLong() == 486161636105650176L) {
-        for (Member member : guild.getMembers()) {
-          if (member.getUser().getIdLong() == user.getIdLong()) {
-            return member;
-          }
-        }
-      }
-    }
-    return null;
+  public void stopVoting() {
+    LOGGER.info("Stoppe Experten-Voting...");
+    voteMessageSent = false;
+    List<User> possibleWinners = votesDao.getWinners();
+    User winner = possibleWinners.get(new Random().nextInt(possibleWinners.size()));
+    LOGGER.info("Gewinner des Votings: " + winner.getName());
+    sendEmbedMessage(
+        jda.getTextChannelById(555106694439501827L),
+        "Voting",
+        "Das Expertenvoting ist beendet. Neuer Experte: " + winner.getAsMention());
+    jda.getGuildById(486161636105650176L)
+        .getController()
+        .addSingleRoleToMember(getMember(winner).orElseThrow(NoSuchElementException::new),
+            jda.getRoleById(551802664879390720L))
+        .queue();
+    votesDao.deleteVotes();
   }
 
-  @Override
   public void run() {
     LOGGER.info("Thread #2 gestartet!");
-    try {
-      Thread.sleep(5000L);
-      while (true) {
-        LOGGER.info("Ueberpruefe auf Voting-Statusaenderung...");
-        Calendar calendar = Calendar.getInstance();
-        int day = calendar.get(Calendar.DAY_OF_WEEK);
-        if (day == 7 && !voteMessageSent) {
-          startVoting();
-        } else if (day == 2 && voteMessageSent) {
-          stopVoting();
-        }
-        Thread.sleep(300000L);
+    scheduledExecutorService.scheduleWithFixedDelay(() -> {
+      LOGGER.info("Ueberpruefe auf Voting-Statusaenderung...");
+      Calendar calendar = Calendar.getInstance();
+      int day = calendar.get(Calendar.DAY_OF_WEEK);
+      if (day == 7 && !voteMessageSent) {
+        startVoting();
+      } else if (day == 2 && voteMessageSent) {
+        stopVoting();
       }
-    } catch (InterruptedException ex) {
-      LOGGER.error(ex, ex);
-      Thread.currentThread().interrupt();
-      throw new RuntimeException(ex);
-    }
+    }, 5, 300, TimeUnit.SECONDS);
   }
 
   private void startVoting() {
     if (votingStatus = false) {
       votingStatus = true;
       try {
+        File file = new File("voting-data.txt");
+        if (!file.exists()) {
+          file.createNewFile();
+        }
         Files.write(
             Paths.get(new File("voting-data.txt").toURI()),
             Collections.singletonList(String.valueOf(votingStatus)),

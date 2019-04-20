@@ -1,10 +1,14 @@
 package net.seliba.rankbot.runnables;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.entities.TextChannel;
@@ -13,30 +17,31 @@ import net.seliba.rankbot.youtube.NewVideoFetcher;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-public class NewVideoRunnable implements Runnable {
+public class NewVideoRunnable {
 
   private static final Logger LOGGER = LogManager.getLogger(Rankbot.class.getName());
 
   private JDA jda;
   private File videoFile;
   private String latestVideoId;
+  private ScheduledExecutorService scheduledExecutorService;
 
   public NewVideoRunnable(JDA jda, File videoFile, String latestVideoId) {
     this.jda = jda;
     this.videoFile = videoFile;
     this.latestVideoId = latestVideoId;
+    this.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
   }
 
   private static void sendMessage(TextChannel textChannel, String message) {
     textChannel.sendMessage(new MessageBuilder().setContent(message).build()).queue();
   }
 
-  @Override
   public void run() {
     LOGGER.info("Thread #1 gestartet!");
-    try {
-      Thread.sleep(5000L);
-      while (true) {
+
+    scheduledExecutorService.scheduleWithFixedDelay(() -> {
+      try {
         LOGGER.info("Ueberpruefe auf neue Videos...");
         String videoData = NewVideoFetcher.getLatestVideoData();
         if (!latestVideoId.equalsIgnoreCase(videoData)) {
@@ -60,12 +65,9 @@ public class NewVideoRunnable implements Runnable {
             Paths.get(videoFile.toURI()),
             Collections.singletonList(latestVideoId),
             Charset.forName("UTF-8"));
-        Thread.sleep(300000L);
+      } catch (IOException exception) {
+        LOGGER.error(exception, exception);
       }
-    } catch (Exception ex) {
-      LOGGER.error(ex, ex);
-      Thread.currentThread().interrupt();
-      throw new RuntimeException(ex);
-    }
+    }, 5, 300, TimeUnit.SECONDS);
   }
 }

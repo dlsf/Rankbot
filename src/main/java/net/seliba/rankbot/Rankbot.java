@@ -19,6 +19,7 @@ import net.seliba.rankbot.command.VoteCommandModule;
 import net.seliba.rankbot.files.LevelDao;
 import net.seliba.rankbot.files.TomlData;
 import net.seliba.rankbot.files.VotesDao;
+import net.seliba.rankbot.listener.ChatListener;
 import net.seliba.rankbot.runnables.NewVideoRunnable;
 import net.seliba.rankbot.runnables.VoteUpdateRunnable;
 import org.apache.log4j.LogManager;
@@ -30,7 +31,7 @@ public class Rankbot {
   private static JDA jda;
   private static File expertVotingFile;
 
-  public static void main(String[] args) throws IOException, LoginException {
+  public static void main(String[] args) throws IOException, LoginException, InterruptedException {
     LOGGER.info("Der Bot wurde gestartet");
     TomlData levelData = new TomlData("levels");
     TomlData votingList = new TomlData("voted");
@@ -38,29 +39,33 @@ public class Rankbot {
 
     LevelDao levelDao = new LevelDao(levelData);
     VotesDao votesDao = new VotesDao(jda, votingResults, votingList);
-    LOGGER.info("Login wird ausgefuehrt...");
-    CommandClient client =
-        new CommandClientBuilder()
-            .addCommands(new MessageCommand(), new RankCommand(levelDao), new TopCommand(levelDao))
-            .addAnnotatedModule(new VoteCommandModule(votesDao))
-            .setPrefix("!")
-            .useHelpBuilder(false)
-            .setOwnerId("450632370354126858")
-            .build();
-    jda = new JDABuilder(AccountType.BOT).addEventListener(client).setToken(getToken()).build();
-
-    LOGGER.info("Login erfolgreich");
 
     File videoFile = new File("latest.txt");
     expertVotingFile = new File("voting-data.txt");
     String latestVideoId = new Scanner(videoFile).nextLine();
 
-    Thread newVideoFetcherThread = new Thread(new NewVideoRunnable(jda, videoFile, latestVideoId));
-    Thread voteUpdateScheduler =
-        new Thread(new VoteUpdateRunnable(jda, votesDao, getExpertVotingStatus()));
+    NewVideoRunnable newVideoRunnable = new NewVideoRunnable(jda, videoFile, latestVideoId);
+    VoteUpdateRunnable voteUpdateRunnable = new VoteUpdateRunnable(jda, votesDao,
+        getExpertVotingStatus());
 
-    newVideoFetcherThread.start();
-    voteUpdateScheduler.start();
+    newVideoRunnable.run();
+    voteUpdateRunnable.run();
+
+    LOGGER.info("Login wird ausgefuehrt...");
+    CommandClient client =
+        new CommandClientBuilder()
+            .addCommands(new MessageCommand(), new RankCommand(levelDao), new TopCommand(levelDao))
+            .addAnnotatedModule(new VoteCommandModule(votesDao, voteUpdateRunnable))
+            .setPrefix("!")
+            .useHelpBuilder(false)
+            .setOwnerId("450632370354126858")
+            .build();
+    jda = new JDABuilder(AccountType.BOT).addEventListener(client).setToken(getToken()).build()
+        .awaitReady();
+
+    LOGGER.info("Login erfolgreich");
+
+    jda.addEventListener(new ChatListener(levelDao));
   }
 
   private static String getToken() {

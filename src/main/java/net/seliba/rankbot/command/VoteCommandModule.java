@@ -2,15 +2,14 @@ package net.seliba.rankbot.command;
 
 import com.jagrosh.jdautilities.command.CommandEvent;
 import com.jagrosh.jdautilities.command.annotation.JDACommand;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.List;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.Role;
 import net.dv8tion.jda.core.entities.User;
 import net.seliba.rankbot.files.VotesDao;
 import net.seliba.rankbot.runnables.VoteUpdateRunnable;
-
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.util.List;
 
 /**
  * @author Johnny_JayJay (https://www.github.com/JohnnyJayJay)
@@ -19,9 +18,11 @@ import java.util.List;
 public class VoteCommandModule {
 
   private final VotesDao votesDao;
+  private VoteUpdateRunnable voteUpdateRunnable;
 
-  public VoteCommandModule(VotesDao votesDao) {
+  public VoteCommandModule(VotesDao votesDao, VoteUpdateRunnable voteUpdateRunnable) {
     this.votesDao = votesDao;
+    this.voteUpdateRunnable = voteUpdateRunnable;
   }
 
   @JDACommand(name = "vote")
@@ -85,7 +86,7 @@ public class VoteCommandModule {
   @JDACommand(name = "winner")
   public void determineWinner(CommandEvent event) {
     if (event.getAuthor().getIdLong() == 450632370354126858L) {
-      VoteUpdateRunnable.stopVoting();
+      voteUpdateRunnable.stopVoting();
     }
   }
 }
