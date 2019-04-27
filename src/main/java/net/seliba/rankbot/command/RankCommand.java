@@ -38,12 +38,15 @@ public class RankCommand extends Command {
   }
 
   private String buildProgressBar(RankStats stats) {
-    StringBuilder builder = new StringBuilder();
+    StringBuilder stringBuilder = new StringBuilder();
     double barProgress = (((double) stats.xp) / stats.xpToLevelUp) * 20;
-    for (int i = 0; i < barProgress + (20 - barProgress); i++) {
-      builder.append("▒");
+    for (int i = 0; i < barProgress; i++) {
+      stringBuilder.append("█");
     }
-    return builder.toString();
+    for (int i = 0; i < 20 - barProgress; i++) {
+      stringBuilder.append("▒");
+    }
+    return stringBuilder.toString();
   }
 
   private class RankStats {
