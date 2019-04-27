@@ -49,6 +49,9 @@ public class VoteCommandModule {
       event.reply(Messages.createMessage(author, "Vote", "Du hast bereits gevotet!"), Messages::deleteShortly);
     } else if (isExpert(candidate)) {
       event.reply(Messages.createMessage(author, "Vote", "Dieser Nutzer ist bereits ein Experte"), Messages::deleteShortly);
+    } else if (isBot(candidate)) {
+      event.reply(Messages.createMessage(author, "Vote", "Du darfst nicht für Bots voten!"),
+          Messages::deleteShortly);
     } else {
       votesDao.vote(author, candidate.getUser());
       event.reply(Messages.createMessage(author, "Vote", "Du hast erfolgreich für "
@@ -75,7 +78,11 @@ public class VoteCommandModule {
   }
 
   private boolean isExpert(Member member) {
-    return member.getRoles().stream().map(Role::getId).anyMatch("486161927765098496"::equals);
+    return member.getRoles().stream().map(Role::getId).anyMatch("551802664879390720"::equals);
+  }
+
+  private boolean isBot(Member member) {
+    return member.getUser().isBot();
   }
 
   private boolean isVoteDay() {
