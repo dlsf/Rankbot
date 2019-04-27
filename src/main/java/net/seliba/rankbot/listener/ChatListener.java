@@ -1,11 +1,9 @@
 package net.seliba.rankbot.listener;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 import net.dv8tion.jda.core.entities.User;
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
@@ -13,15 +11,13 @@ import net.seliba.rankbot.files.LevelDao;
 
 public class ChatListener extends ListenerAdapter {
 
-  private static List<User> sendMessageUsers = new ArrayList<>();
   private static List<Long> disabledChannels = Arrays
       .asList(486921595047247872L, 486910521329844227L);
+  private Map<User, Long> timestamps = new HashMap<>();
 
-  private ScheduledExecutorService scheduledExecutorService;
   private LevelDao levelDao;
 
   public ChatListener(LevelDao levelDao) {
-    this.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
     this.levelDao = levelDao;
   }
 
@@ -35,11 +31,11 @@ public class ChatListener extends ListenerAdapter {
       return;
     }
 
-    scheduledExecutorService.schedule(() ->
-            sendMessageUsers.remove(event.getAuthor())
-        , 1, TimeUnit.MINUTES);
-    sendMessageUsers.add(event.getAuthor());
-    levelDao.giveXP(event.getMember(), event.getGuild());
+    if (!timestamps.containsKey(event.getAuthor()) || timestamps.get(event.getAuthor()) > System
+        .currentTimeMillis()) {
+      levelDao.giveXP(event.getMember(), event.getGuild());
+      timestamps.put(event.getAuthor(), System.currentTimeMillis());
+    }
   }
 
 }
