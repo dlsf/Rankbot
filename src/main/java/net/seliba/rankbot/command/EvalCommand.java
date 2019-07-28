@@ -2,6 +2,7 @@ package net.seliba.rankbot.command;
 
 import com.jagrosh.jdautilities.command.Command;
 import com.jagrosh.jdautilities.command.CommandEvent;
+import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Message;
 
 import javax.script.Bindings;
@@ -31,8 +32,11 @@ public class EvalCommand extends Command {
     if (script.contains("getToken()")) {
       event.reply(":clown:");
     } else {
+      Bindings bindings = event.getMember().hasPermission(Permission.ADMINISTRATOR)
+          ? createBindings(event)
+          : engine.createBindings();
       try {
-        Object result = engine.eval(script, createBindings(event));
+        Object result = engine.eval(script, bindings);
         event.reply("Result:```java\n" + result + "```");
       } catch (ScriptException e) {
         event.replyFormatted("%s:```\n%s```", e.getMessage(), getStackTraceAsString(e.getCause()));
