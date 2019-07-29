@@ -16,31 +16,27 @@ import java.util.regex.Pattern;
  */
 public class EvalCommand extends Command {
 
+  public static final Pattern CODE_BLOCK_PATTERN = Pattern.compile("^```(java)?|```$");
+
   private static final ScriptEngineManager ENGINE_MANAGER = new ScriptEngineManager();
-  private static final Pattern CODE_BLOCK_PATTERN = Pattern.compile("^```(java)?|```$");
 
   private final ScriptEngine engine;
 
   public EvalCommand() {
     this.name = "eval";
+    this.userPermissions = new Permission[]{Permission.ADMINISTRATOR};
     this.engine = ENGINE_MANAGER.getEngineByName("nashorn");
   }
 
   @Override
   protected void execute(CommandEvent event) {
     String script = CODE_BLOCK_PATTERN.matcher(event.getArgs()).replaceAll("");
-    if (script.contains("getToken()")) {
-      event.reply(":clown:");
-    } else {
-      Bindings bindings = event.getMember().hasPermission(Permission.ADMINISTRATOR)
-          ? createBindings(event)
-          : engine.createBindings();
-      try {
-        Object result = engine.eval(script, bindings);
-        event.reply("Result:```java\n" + result + "```");
-      } catch (ScriptException e) {
-        event.replyFormatted("%s:```\n%s```", e.getMessage(), getStackTraceAsString(e.getCause()));
-      }
+    Bindings bindings = createBindings(event);
+    try {
+      Object result = engine.eval(script, bindings);
+      event.reply("Result:```java\n" + result + "```");
+    } catch (ScriptException e) {
+      event.replyFormatted("%s:```\n%s```", e.getMessage(), getStackTraceAsString(e.getCause()));
     }
   }
 
