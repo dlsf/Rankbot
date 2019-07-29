@@ -49,7 +49,7 @@ public class RankCommand extends Command {
     return stringBuilder.toString();
   }
 
-  private class RankStats {
+  private static class RankStats {
 
     final long level, xp, xpToLevelUp;
 
